@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/needle-project/common.svg?branch=master)](https://travis-ci.org/needle-project/common)
+
 # Transaction Process
 
 This library helps you run your process with capabilities of rollback in case one of the processes fails! (Similar to Database Transactions).
