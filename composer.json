@@ -1,6 +1,6 @@
 {
     "name": "needle-project/process-transaction",
-    "description": "Offer a transaction like support for processes",
+    "description": "Offer a transaction like support for php processes",
     "license": "MIT",
     "authors": [
         {
