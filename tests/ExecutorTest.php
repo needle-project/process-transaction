@@ -47,6 +47,7 @@ class ExecutorTest extends TestCase
         $secondProcess = Process::createProcess(function () {
             return "Second process execute!";
         }, function () {
+            return "Should not call rollback!";
         }, "SecondProcess");
 
         $executor->addProcess($firstProcess);
@@ -56,6 +57,36 @@ class ExecutorTest extends TestCase
             $executor->execute();
         } catch (\Exception $e) {
             // do nothing
+        }
+        $this->assertNull($secondProcess->getResult());
+    }
+
+    /**
+     * Assert that the second process is not roll-back if it fails!
+     */
+    public function testNoRollbackForFailedProcess()
+    {
+        $executor = new Executor();
+
+        $firstProcess = Process::createProcess(function () {
+            return "First process executed!";
+        }, function () {
+            return "Rollback executed!";
+        }, "FirstProcess");
+
+        $secondProcess = Process::createProcess(function () {
+            throw new \Exception("Cannot process!");
+        }, function () {
+            return "Should not call rollback!";
+        }, "SecondProcess");
+
+        $executor->addProcess($firstProcess);
+        $executor->addProcess($secondProcess);
+
+        try {
+            $executor->execute();
+        } catch (\Exception $e) {
+            $executor->rollback();
         }
         $this->assertNull($secondProcess->getResult());
     }
@@ -76,6 +107,7 @@ class ExecutorTest extends TestCase
         $secondProcess = Process::createProcess(function () {
             return "Second process execute!";
         }, function () {
+            return "Should not return nothing!";
         }, "SecondProcess");
 
         $executor->addProcess($firstProcess);
@@ -86,7 +118,7 @@ class ExecutorTest extends TestCase
         } catch (\Exception $e) {
             $executor->rollback();
         }
-        $this->assertEquals("Rollback executed!", $firstProcess->getResult());
+        $this->assertNull($firstProcess->getResult());
         $this->assertNull($secondProcess->getResult());
     }
 
@@ -116,7 +148,6 @@ class ExecutorTest extends TestCase
 
         $this->assertEquals(['Foo','Bar'], $order);
     }
-
 
     /**
      * Test that the processes are executed in the desired order

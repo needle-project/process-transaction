@@ -54,6 +54,7 @@ class Executor
             $current = $this->processList->offsetGet($i);
             // Exclude rolling back processes that has not been executed
             if ($current->hasExecuted() === false) {
+
                 continue;
             }
             $this->processList->offsetGet($i)->rollback();

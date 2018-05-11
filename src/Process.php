@@ -41,8 +41,11 @@ class Process
      * @param \Closure $rollbackAction
      * @param string $processName
      */
-    protected function __construct(\Closure $executeAction, \Closure $rollbackAction, string $processName)
+    protected function __construct(\Closure $executeAction, \Closure $rollbackAction, string $processName = null)
     {
+        if (is_null($processName)) {
+            $processName = spl_object_hash($executeAction) . '_' . spl_object_hash($rollbackAction);
+        }
         $this->executeAction = $executeAction;
         $this->rollbackAction = $rollbackAction;
         $this->processName = $processName;
@@ -60,7 +63,7 @@ class Process
     public static function createProcess(
         \Closure $executeAction,
         \Closure $rollbackAction,
-        string $processName,
+        string $processName = null,
         bool $debug = false
     ): Process {
         if (true === $debug) {
@@ -104,8 +107,8 @@ class Process
      */
     public function execute()
     {
-        $this->executed = true;
         $this->putResult($this->executeAction->__invoke());
+        $this->executed = true;
         return $this;
     }
 
