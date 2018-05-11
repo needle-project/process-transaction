@@ -1,0 +1,24 @@
+{
+    "name": "needle-project/process-transaction",
+    "description": "Offer a transaction like support for processes",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Adrian Tilita",
+            "email": "adrian@tilita.ro",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=5.5"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "7.*",
+        "squizlabs/php_codesniffer": "2.*",
+        "phpmd/phpmd" : "@stable"
+    },
+    "autoload": {
+        "psr-4": {"NeedleProject\\Transaction\\": "src/"}
+    },
+    "minimum-stability": "stable"
+}
