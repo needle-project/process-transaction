@@ -22,6 +22,20 @@ class ProcessTest extends TestCase
     }
 
     /**
+     * Test that a process can be build without a process name
+     */
+    public function testNameConstruct()
+    {
+        $process = Process::createProcess(
+            function () {
+            },
+            function () {
+            }
+        );
+        $this->assertNotNull($process->getName());
+    }
+
+    /**
      * Test that a process passed-on data are correct
      */
     public function testProcessName()

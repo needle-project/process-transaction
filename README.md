@@ -71,7 +71,10 @@ echo $charge->getResult() . "\n";
 echo $reserveStock->getResult() . "\n";
 ```
 
+
 Timing processes:
+> Note tha this is just as a debug process, metrics should be done
+> using other methods like statsD
 ```php
 <?php
 require_once 'vendor/autoload.php';
@@ -110,3 +113,4 @@ try {
 
 echo sprintf("%s took %.2f sec.", $charge->getName(), $charge->executionDuration);
 ```
+> The same can be done using `$charge->rollbackDuration` for getting execution time of a rollback process

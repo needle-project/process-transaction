@@ -12,7 +12,12 @@ class MonitoredProcess extends Process
     /**
      * @var float Total duration for a process to be executed!
      */
-    public $executionDuration = null;
+    public $executionDuration = 0;
+
+    /**
+     * @var float Total duration for a process to be roll-back!
+     */
+    public $rollbackDuration = 0;
 
     /**
      * Execute the process
@@ -32,7 +37,7 @@ class MonitoredProcess extends Process
     {
         $time = microtime(true);
         parent::rollback();
-        $this->executionDuration = microtime(true) - $time;
+        $this->rollbackDuration = microtime(true) - $time;
         return $this;
     }
 }
