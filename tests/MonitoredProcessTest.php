@@ -55,7 +55,7 @@ class MonitoredProcessTest extends TestCase
             true
         );
         $process->execute();
-        $process->rollback();
+        $process->rollBack();
         $this->assertEquals(1, round($process->rollbackDuration));
     }
 }

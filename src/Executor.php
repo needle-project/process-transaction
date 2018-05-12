@@ -23,9 +23,9 @@ class Executor
     }
 
     /**
-     * @param Process $process
+     * @param ProcessInterface $process
      */
-    public function addProcess(Process $process)
+    public function addProcess(ProcessInterface $process)
     {
         $this->processList->append($process);
     }
@@ -45,19 +45,18 @@ class Executor
     /**
      * Rollback in reverse order
      */
-    public function rollback()
+    public function rollBack()
     {
         $maxOffset = $this->processList->count() - 1;
 
         for ($i = $maxOffset; $i >= 0; $i--) {
-            /** @var Process $current */
-            $current = $this->processList->offsetGet($i);
+            /** @var ProcessInterface $currentProcess */
+            $currentProcess = $this->processList->offsetGet($i);
             // Exclude rolling back processes that has not been executed
-            if ($current->hasExecuted() === false) {
-
+            if ($currentProcess->hasExecuted() === false) {
                 continue;
             }
-            $this->processList->offsetGet($i)->rollback();
+            $currentProcess->rollBack();
         }
     }
 }

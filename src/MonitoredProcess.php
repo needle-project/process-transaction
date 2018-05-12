@@ -33,7 +33,7 @@ class MonitoredProcess extends Process
     /**
      * Rollback action
      */
-    public function rollback()
+    public function rollBack()
     {
         $time = microtime(true);
         parent::rollback();

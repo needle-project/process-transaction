@@ -86,7 +86,7 @@ class ProcessTest extends TestCase
 
         $process->execute();
 
-        $this->assertEquals('bar', $process->rollback()->getResult());
+        $this->assertEquals('bar', $process->rollBack()->getResult());
     }
 
     /**
@@ -138,6 +138,6 @@ class ProcessTest extends TestCase
 
         $this->expectException(\RuntimeException::class);
 
-        $process->rollback();
+        $process->rollBack();
     }
 }

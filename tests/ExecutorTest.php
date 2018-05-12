@@ -86,7 +86,7 @@ class ExecutorTest extends TestCase
         try {
             $executor->execute();
         } catch (\Exception $e) {
-            $executor->rollback();
+            $executor->rollBack();
         }
         $this->assertNull($secondProcess->getResult());
     }
@@ -116,7 +116,7 @@ class ExecutorTest extends TestCase
         try {
             $executor->execute();
         } catch (\Exception $e) {
-            $executor->rollback();
+            $executor->rollBack();
         }
         $this->assertNull($firstProcess->getResult());
         $this->assertNull($secondProcess->getResult());
@@ -190,7 +190,7 @@ class ExecutorTest extends TestCase
         $executor->addProcess($thirdProcess);
 
         $executor->execute();
-        $executor->rollback();
+        $executor->rollBack();
 
         $this->assertEquals(['Baz','Bar', 'Foo'], $order);
     }

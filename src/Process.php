@@ -7,7 +7,7 @@ namespace NeedleProject\Transaction;
  * @package NeedleProject\Transaction
  * @author  Adrian Tilita <adrian@tilita.ro>
  */
-class Process
+class Process implements ProcessInterface
 {
     /**
      * @var null|\Closure
@@ -58,14 +58,14 @@ class Process
      * @param \Closure $rollbackAction
      * @param string $processName
      * @param bool $debug
-     * @return Process
+     * @return ProcessInterface
      */
     public static function createProcess(
         \Closure $executeAction,
         \Closure $rollbackAction,
         string $processName = null,
         bool $debug = false
-    ): Process {
+    ): ProcessInterface {
         if (true === $debug) {
             return new MonitoredProcess($executeAction, $rollbackAction, $processName);
         }
@@ -115,7 +115,7 @@ class Process
     /**
      * Rollback action
      */
-    public function rollback()
+    public function rollBack()
     {
         if (false === $this->hasExecuted()) {
             throw new \RuntimeException(
