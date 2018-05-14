@@ -20,4 +20,15 @@ interface ProcessInterface
      * @return mixed
      */
     public function rollBack();
+
+    /**
+     * Retrieve the execution state of the process
+     * @return bool
+     */
+    public function hasExecuted(): bool;
+
+    /**
+     * Mark the process as executed
+     */
+    public function markAsExecuted();
 }

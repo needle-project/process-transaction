@@ -5,12 +5,9 @@ use PHPUnit\Framework\TestCase;
 
 class ProcessTest extends TestCase
 {
-    /**
-     * Test that a process can be build
-     */
     public function testConstruct()
     {
-        $process = Process::createProcess(
+        $process = new Process(
             function () {
             },
             function () {
@@ -21,123 +18,69 @@ class ProcessTest extends TestCase
         $this->assertInstanceOf(Process::class, $process);
     }
 
-    /**
-     * Test that a process can be build without a process name
-     */
     public function testNameConstruct()
     {
-        $process = Process::createProcess(
-            function () {
-            },
-            function () {
-            }
-        );
-        $this->assertNotNull($process->getName());
-    }
-
-    /**
-     * Test that a process passed-on data are correct
-     */
-    public function testProcessName()
-    {
-        $process = Process::createProcess(
+        $process = new Process(
             function () {
             },
             function () {
             },
             'Foo'
         );
-
         $this->assertEquals('Foo', $process->getName());
     }
 
-    /**
-     * Test that a process passed-on data are correct
-     */
-    public function testExecute()
+    public function testEmptyProcessName()
     {
-        $data = 'foo';
-        $process = Process::createProcess(
-            function () use ($data) {
-                return $data;
-            },
-            function () {
-            },
-            'Foo'
-        );
+        $execute = function () {
+        };
+        $rollBack = function () {
+        };
 
-        $this->assertEquals('foo', $process->execute()->getResult());
+        $process = new Process($execute, $rollBack);
+
+        $this->assertEquals(
+            spl_object_hash($execute) . '_' . spl_object_hash($rollBack),
+            $process->getName()
+        );
     }
 
-    /**
-     * Test that a process passed-on data are correct
-     */
-    public function testRollback()
+    public function testExecuteCollaboration()
     {
-        $data = 'bar';
-        $process = Process::createProcess(
-            function () {
-            },
-            function () use ($data) {
-                return $data;
-            },
-            'Foo'
-        );
+        // Unfortunately, closures cannot be mocked in PHPUnit so will test the
+        // collaboration by implementing the closure
+        $executed = false;
 
+        $closureExecuteMock = function () use (&$executed) {
+            $executed = true;
+        };
+        $closureRollBackMock = function () {
+            throw new \Exception("Rollback should not be executed!");
+        };
+
+        $process = new Process($closureExecuteMock, $closureRollBackMock);
+
+        $this->assertFalse($executed);
         $process->execute();
 
-        $this->assertEquals('bar', $process->rollBack()->getResult());
+        $this->assertTrue($executed);
     }
 
-    /**
-     * Test that a process passed-on data are correct
-     */
-    public function testExecuted()
+    public function testRollbackCollaboration()
     {
-        $process = Process::createProcess(
-            function () {
-            },
-            function () {
-            },
-            'Foo'
-        );
+        $rollbackExecuted = false;
 
-        $process->execute();
+        $closureExecuteMock = function () {
+        };
+        $closureRollBackMock = function () use (&$rollbackExecuted) {
+            $rollbackExecuted = true;
+        };
 
-        $this->assertTrue($process->hasExecuted());
-    }
+        $process = new Process($closureExecuteMock, $closureRollBackMock);
 
-    /**
-     * Test that a process passed-on data are correct
-     */
-    public function testNotExecuted()
-    {
-        $process = Process::createProcess(
-            function () {
-            },
-            function () {
-            },
-            'Foo'
-        );
-
-        $this->assertFalse($process->hasExecuted());
-    }
-
-    /**
-     * Test that a process passed-on data are correct
-     */
-    public function testUnExecutableRollback()
-    {
-        $process = Process::createProcess(
-            function () {
-            },
-            function () {
-            },
-            'Foo'
-        );
-
-        $this->expectException(\RuntimeException::class);
-
+        $this->assertFalse($rollbackExecuted);
         $process->rollBack();
+
+        $this->assertTrue($rollbackExecuted);
     }
 }

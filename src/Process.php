@@ -7,8 +7,12 @@ namespace NeedleProject\Transaction;
  * @package NeedleProject\Transaction
  * @author  Adrian Tilita <adrian@tilita.ro>
  */
-class Process implements ProcessInterface
+class Process implements ProcessInterface, ExecutionResultInterface, RollBackResultInterface
 {
+    use ExecutionResultTrait;
+    use RollBackResultTrait;
+    use ExecutionStateTrait;
+
     /**
      * @var null|\Closure
      */
@@ -25,23 +29,13 @@ class Process implements ProcessInterface
     private $processName = null;
 
     /**
-     * @var bool
-     */
-    private $executed = false;
-
-    /**
-     * @var null
-     */
-    private $processResult = null;
-
-    /**
      * Process constructor.
      *
      * @param \Closure $executeAction
      * @param \Closure $rollbackAction
      * @param string $processName
      */
-    protected function __construct(\Closure $executeAction, \Closure $rollbackAction, string $processName = null)
+    public function __construct(\Closure $executeAction, \Closure $rollbackAction, string $processName = null)
     {
         if (is_null($processName)) {
             $processName = spl_object_hash($executeAction) . '_' . spl_object_hash($rollbackAction);
@@ -49,27 +43,6 @@ class Process implements ProcessInterface
         $this->executeAction = $executeAction;
         $this->rollbackAction = $rollbackAction;
         $this->processName = $processName;
-    }
-
-    /**
-     * Create a new Process
-     *
-     * @param \Closure $executeAction
-     * @param \Closure $rollbackAction
-     * @param string $processName
-     * @param bool $debug
-     * @return ProcessInterface
-     */
-    public static function createProcess(
-        \Closure $executeAction,
-        \Closure $rollbackAction,
-        string $processName = null,
-        bool $debug = false
-    ): ProcessInterface {
-        if (true === $debug) {
-            return new MonitoredProcess($executeAction, $rollbackAction, $processName);
-        }
-        return new self($executeAction, $rollbackAction, $processName);
     }
 
     /**
@@ -81,35 +54,11 @@ class Process implements ProcessInterface
     }
 
     /**
-     * Set the process result
-     *
-     * @param $result
-     * @return $this
-     */
-    protected function putResult($result)
-    {
-        $this->processResult = $result;
-        return $this;
-    }
-
-    /**
-     * Retrieve the result
-     *
-     * @return mixed
-     */
-    public function getResult()
-    {
-        return $this->processResult;
-    }
-
-    /**
      * Execute the process
      */
     public function execute()
     {
-        $this->putResult($this->executeAction->__invoke());
-        $this->executed = true;
-        return $this;
+        return $this->executeAction->__invoke();
     }
 
     /**
@@ -117,22 +66,6 @@ class Process implements ProcessInterface
      */
     public function rollBack()
     {
-        if (false === $this->hasExecuted()) {
-            throw new \RuntimeException(
-                sprintf("Process %s cannot be roll-backed because was not executed!", $this->getName())
-            );
-        }
-
-        $this->putResult($this->rollbackAction->__invoke());
-        $this->executed = false;
-        return $this;
-    }
-
-    /**
-     * @return bool
-     */
-    public function hasExecuted(): bool
-    {
-        return $this->executed;
+        return $this->rollbackAction->__invoke();
     }
 }

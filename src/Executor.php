@@ -37,7 +37,15 @@ class Executor
     {
         $this->processList->rewind();
         while ($this->processList->valid()) {
-            $this->processList->current()->execute();
+            /** @var ProcessInterface $currentProcess */
+            $currentProcess = $this->processList->current();
+
+            $executionResult = $currentProcess->execute();
+            if ($currentProcess instanceof ExecutionResultInterface) {
+                $currentProcess->setExecutionResult($executionResult);
+            }
+            $currentProcess->markAsExecuted();
+
             $this->processList->next();
         }
     }
@@ -56,7 +64,10 @@ class Executor
             if ($currentProcess->hasExecuted() === false) {
                 continue;
             }
-            $currentProcess->rollBack();
+            $rollBackResult = $currentProcess->rollBack();
+            if ($currentProcess instanceof RollBackResultInterface) {
+                $currentProcess->setRollBackResult($rollBackResult);
+            }
         }
     }
 }

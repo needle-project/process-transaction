@@ -5,50 +5,58 @@ use PHPUnit\Framework\TestCase;
 
 class ExecutorTest extends TestCase
 {
-    /**
-     * Test that 2 processes wil get executed
-     */
     public function testExecuteTwoProcess()
     {
         $executor = new Executor();
 
-        $firstProcess = Process::createProcess(function () {
-            return "First process execute!";
-        }, function () {
-        }, "FirstProcess");
+        $firstProcess = new Process(
+            function () {
+                return "First process execute!";
+            },
+            function () {
+            },
+            "FirstProcess"
+        );
 
-        $secondProcess = Process::createProcess(function () {
-            return "Second process execute!";
-        }, function () {
-        }, "SecondProcess");
+        $secondProcess = new Process(
+            function () {
+                return "Second process execute!";
+            },
+            function () {
+            },
+            "SecondProcess"
+        );
 
         $executor->addProcess($firstProcess);
         $executor->addProcess($secondProcess);
 
+        $this->assertFalse($firstProcess->hasExecuted());
+        $this->assertFalse($secondProcess->hasExecuted());
+
         $executor->execute();
 
-        $this->assertEquals('First process execute!', $firstProcess->getResult());
-        $this->assertEquals('Second process execute!', $secondProcess->getResult());
+        $this->assertTrue($firstProcess->hasExecuted());
+        $this->assertTrue($secondProcess->hasExecuted());
     }
 
-    /**
-     * Assert that the second process is not executed if the first one fails!
-     */
     public function testExecutionStopsIfOneFails()
     {
         $executor = new Executor();
 
-        $firstProcess = Process::createProcess(function () {
-            throw new \Exception("Cannot process!");
-        }, function () {
-            return "Rollback executed!";
-        }, "FirstProcess");
+        $firstProcess = new Process(
+            function () {
+                throw new \Exception("Cannot process!");
+            },
+            function () {
+            }
+        );
 
-        $secondProcess = Process::createProcess(function () {
-            return "Second process execute!";
-        }, function () {
-            return "Should not call rollback!";
-        }, "SecondProcess");
+        $secondProcess = new Process(
+            function () {
+            },
+            function () {
+            }
+        );
 
         $executor->addProcess($firstProcess);
         $executor->addProcess($secondProcess);
@@ -58,140 +66,154 @@ class ExecutorTest extends TestCase
         } catch (\Exception $e) {
             // do nothing
         }
-        $this->assertNull($secondProcess->getResult());
+        $this->assertFalse($secondProcess->hasExecuted());
     }
 
-    /**
-     * Assert that the second process is not roll-back if it fails!
-     */
-    public function testNoRollbackForFailedProcess()
+    public function testExecuteOrder()
     {
+        $items = [];
+
         $executor = new Executor();
-
-        $firstProcess = Process::createProcess(function () {
-            return "First process executed!";
-        }, function () {
-            return "Rollback executed!";
-        }, "FirstProcess");
-
-        $secondProcess = Process::createProcess(function () {
-            throw new \Exception("Cannot process!");
-        }, function () {
-            return "Should not call rollback!";
-        }, "SecondProcess");
-
-        $executor->addProcess($firstProcess);
-        $executor->addProcess($secondProcess);
-
-        try {
-            $executor->execute();
-        } catch (\Exception $e) {
-            $executor->rollBack();
-        }
-        $this->assertNull($secondProcess->getResult());
-    }
-
-    /**
-     * Test that if a process fails, second one does not execute and first one gets roll-backed
-     */
-    public function testRollback()
-    {
-        $executor = new Executor();
-
-        $firstProcess = Process::createProcess(function () {
-            throw new \Exception("Cannot process!");
-        }, function () {
-            return "Rollback executed!";
-        }, "FirstProcess");
-
-        $secondProcess = Process::createProcess(function () {
-            return "Second process execute!";
-        }, function () {
-            return "Should not return nothing!";
-        }, "SecondProcess");
-
-        $executor->addProcess($firstProcess);
-        $executor->addProcess($secondProcess);
-
-        try {
-            $executor->execute();
-        } catch (\Exception $e) {
-            $executor->rollBack();
-        }
-        $this->assertNull($firstProcess->getResult());
-        $this->assertNull($secondProcess->getResult());
-    }
-
-    /**
-     * Test that the processes are executed in the desired order
-     */
-    public function testExecutionOrder()
-    {
-        $executor = new Executor();
-
-        $order = [];
-
-        $firstProcess = Process::createProcess(function () use (&$order) {
-            $order[] = 'Foo';
-        }, function () {
-        }, "Foo");
-
-        $secondProcess = Process::createProcess(function () use (&$order) {
-            $order[] = 'Bar';
-        }, function () {
-        }, "Bar");
-
-        $executor->addProcess($firstProcess);
-        $executor->addProcess($secondProcess);
-
+        $executor->addProcess(
+            new Process(
+                function () use (&$items) {
+                    $items[] = 'Foo';
+                },
+                function () {
+                }
+            )
+        );
+        $executor->addProcess(
+            new Process(
+                function () use (&$items) {
+                    $items[] = 'Bar';
+                },
+                function () {
+                }
+            )
+        );
+        $executor->addProcess(
+            new Process(
+                function () use (&$items) {
+                    $items[] = 'Baz';
+                },
+                function () {
+                }
+            )
+        );
         $executor->execute();
 
-        $this->assertEquals(['Foo','Bar'], $order);
+        $this->assertEquals(['Foo', 'Bar', 'Baz'], $items);
     }
 
-    /**
-     * Test that the processes are executed in the desired order
-     */
-    public function testRollbackOrder()
+    public function testNoRollbackForOnlyForExecutedProcesses()
     {
         $executor = new Executor();
 
-        $order = [];
-
-        $firstProcess = Process::createProcess(
+        $firstProcess =  new Process(
             function () {
             },
-            function () use (&$order) {
-                $order[] = 'Foo';
-            },
-            'Foo'
+            function () {
+            }
         );
-
-        $secondProcess = Process::createProcess(
+        $secondProcess = new Process(
             function () {
+                throw new \RuntimeException("Could not execute!");
             },
-            function () use (&$order) {
-                $order[] = 'Bar';
-            },
-            'Bar'
+            function () {
+                throw new \Exception("Rollback should not execute!");
+            }
         );
-
-        $thirdProcess = Process::createProcess(
+        $thirdProcess =  new Process(
             function () {
             },
-            function () use (&$order) {
-                $order[] = 'Baz';
-            },
-            'Baz'
+            function () {
+                throw new \Exception("Rollback should not execute!");
+            }
         );
 
         $executor->addProcess($firstProcess);
         $executor->addProcess($secondProcess);
         $executor->addProcess($thirdProcess);
 
-        $executor->execute();
-        $executor->rollBack();
+        try {
+            $executor->execute();
+        } catch (\RuntimeException $e) {
+            $executor->rollBack();
+        }
 
-        $this->assertEquals(['Baz','Bar', 'Foo'], $order);
+        $this->assertFalse($thirdProcess->hasExecuted());
+    }
+
+    public function testNotExecutionResultAware()
+    {
+        $executor = new Executor();
+
+        $firstProcess =  new class(
+            function () {
+            },
+            function () {
+            }
+        ) implements ProcessInterface {
+
+            use ExecutionStateTrait;
+
+            public function execute()
+            {
+                // TODO: Implement execute() method.
+            }
+            public function rollBack()
+            {
+                // TODO: Implement rollBack() method.
+            }
+
+            public function setExecutionResult($executionResult)
+            {
+                throw new \Exception(
+                    "This should not be called as in the current process is not of " .
+                    "ExecutionResultInterface type!"
+                );
+            }
+        };
+        $executor->addProcess($firstProcess);
+
+        $executor->execute();
+        $this->assertTrue($firstProcess->hasExecuted());
+    }
+
+    public function testNotRollBackResultAware()
+    {
+        $executor = new Executor();
+
+        $firstProcess =  new class(
+            function () {
+            },
+            function () {
+            }
+        ) implements ProcessInterface {
+
+            use ExecutionStateTrait;
+
+            public function execute()
+            {
+                // TODO: Implement execute() method.
+            }
+            public function rollBack()
+            {
+                // TODO: Implement rollBack() method.
+            }
+
+            public function setRollBackResult($rollBackResult)
+            {
+                throw new \Exception(
+                    "This should not be called as in the current process is not of " .
+                    "RollBackResultInterface type!"
+                );
+            }
+        };
+        $executor->addProcess($firstProcess);
+
+        $executor->rollBack();
+        $this->assertFalse($firstProcess->hasExecuted());
     }
 }
