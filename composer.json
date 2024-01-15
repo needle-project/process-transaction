@@ -10,10 +10,10 @@
         }
     ],
     "require": {
-        "php": "7.*"
+        "php": "7.*|8.*"
     },
     "require-dev": {
-        "phpunit/phpunit": "7.*|6.*",
+        "phpunit/phpunit": "8.*|7.*|6.*",
         "squizlabs/php_codesniffer": "2.*",
         "phpmd/phpmd" : "@stable"
     },
